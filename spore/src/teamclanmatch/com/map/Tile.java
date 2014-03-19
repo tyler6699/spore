@@ -1,4 +1,4 @@
-package com.teamclanmatch.character;
+package teamclanmatch.com.map;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.teamclanmatch.Enums.TILE_TYPE;
