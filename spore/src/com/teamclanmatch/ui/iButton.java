@@ -1,4 +1,4 @@
-package com.teanclanmatch.ui;
+package com.teamclanmatch.ui;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Rectangle;

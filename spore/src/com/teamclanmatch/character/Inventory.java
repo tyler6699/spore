@@ -3,7 +3,6 @@ package com.teamclanmatch.character;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import teamclanmatch.com.map.Tile;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
@@ -14,6 +13,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.teamclanmatch.Entity;
 import com.teamclanmatch.Player;
 import com.teamclanmatch.managers.Controller;
+import com.teamclanmatch.map.Tile;
 import com.teamclanmatch.screens.MapScreen;
 
 public class Inventory {
