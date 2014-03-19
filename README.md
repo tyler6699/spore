@@ -1,0 +1,4 @@
+spore
+=====
+
+LibGDX Template App
