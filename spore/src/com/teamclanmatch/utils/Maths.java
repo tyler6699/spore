@@ -88,4 +88,26 @@ public class Maths {
 			}// End for loop
 		}
 	}
+	
+//	void projectile(double velocity, double angle, Direction dir, float delta, float y_offset) {	
+//	DotArray.clear();
+//	double vx, vy, ux, uy, time_in_air;
+//	double gravity = 9.8;
+//
+//	ux = velocity * Math.cos(angle * Math.PI / 180);
+//	uy = velocity * Math.sin(angle * Math.PI / 180);
+//
+//	time_in_air = (uy + (Math.sqrt(Math.pow(uy, 2)-4*(gravity/2)*(-y_offset))))/gravity;
+//	
+//	for (float i = 0; i < time_in_air; i += 0.03 ){
+//		if (dir == Direction.LEFT){
+//			vx = -ux * i;
+//		} else {
+//			vx = ux * i;
+//		}
+//		vy = uy * i - 0.5 * - -gravity * Math.pow(i, 2);
+//		Vector2 t = new Vector2((float) vx + hero.x ,(float) vy + hero.y + y_offset);
+//		DotArray.add(t);
+//	}
+// }
 }

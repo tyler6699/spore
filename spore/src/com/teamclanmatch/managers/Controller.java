@@ -17,6 +17,8 @@ public class Controller extends InputAdapter implements InputProcessor {
 	public Vector3  curr  = new Vector3();
 	public Vector3  last  = new Vector3(-1, -1, -1);
 	public Vector3  delta = new Vector3();
+	private Vector3 viewLocation = new Vector3();
+	public float    view_height, view_width, cull_size;
 	
 	// MOUSE
 	public int mouse_x;
@@ -26,7 +28,7 @@ public class Controller extends InputAdapter implements InputProcessor {
 	public Vector2 mouse_screen_vec;
 	public Vector2 mouse_screen_click_at;
 	public Vector2 mouse_map_click_at;
-	public boolean processed_click;
+	public boolean processed_click = true;
 	public Polygon click_screen_area;
 	public Polygon click_map_area;
 	public float   mouse_time;
@@ -72,11 +74,36 @@ public class Controller extends InputAdapter implements InputProcessor {
 		
 		// SCREEN COORDS
 		this.mouse_screen_click_at.set(x, flip_y);
-
+		
+		// MAP COORDS
+		this.mouse_map_click_at.set(get_map_coords(new Vector2(x,y)));
+	
 		this.processed_click = false;
 		this.mouse_time = 0;
 		
 		return false;
+	}
+	
+	public Vector2 get_map_coords(Vector2 mouse_coords){
+		viewLocation.set(0, 0, 0);
+		this.camera.unproject(viewLocation);
+
+		// VERTICAL -Y-
+		view_height   = this.camera.viewportHeight * this.camera.zoom;
+		float ratio_h = view_height / Gdx.graphics.getHeight();
+		float ratio_y = ratio_h *mouse_coords.y;
+		
+		// HORIZONTAL -X-
+		view_width    = this.camera.viewportWidth * this.camera.zoom;
+		float ratio_w = view_width /  Gdx.graphics.getWidth();
+		float ratio_x = ratio_w * mouse_coords.x;
+		
+		// CALCULATE WORLD VECTOR
+		// TODO LOAD MAP - WITH HEIGHT AND WIDTH
+		float y = ((18*32) - ratio_y) + (viewLocation.y - ((18*32)));
+		float x = (ratio_x + viewLocation.x);
+		
+		return new Vector2(x,y);
 	}
 	
 	@Override
@@ -93,6 +120,9 @@ public class Controller extends InputAdapter implements InputProcessor {
 
 	@Override
 	public boolean scrolled(int amount) {
+		camera.zoom += amount;
+		camera.update();
+		System.out.println(camera.zoom);
 		return false;
 	}
 

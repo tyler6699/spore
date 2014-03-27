@@ -26,7 +26,7 @@ public class MainMenu implements Screen  {
 		
 		camera = new OrthographicCamera();
 		// 1 = 32 pixel
-		camera.setToOrtho(false, (device.w / device.h) * 32, 32);
+		camera.setToOrtho(false, (device.w / device.h) * 10, 10);
 		batch = new SpriteBatch();
 		batch.setProjectionMatrix(camera.combined);
 		

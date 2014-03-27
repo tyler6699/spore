@@ -21,7 +21,7 @@ public class MainGame extends Game {
 		// Game Screen
 		game_screen = new GameScreen(this);
 		
-		setScreen(main_menu);
+		setScreen(game_screen);
 	}
 
 
