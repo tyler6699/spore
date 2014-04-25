@@ -31,6 +31,7 @@ public class GameScreen implements Screen {
 	
 	// Entity ID
 	int id 	= 0;
+	float speed = 2;
 	
 	public GameScreen(MainGame game) {
 		this.game = game;
@@ -121,26 +122,26 @@ public class GameScreen implements Screen {
 		//Collections.sort(entities);
 		
 		if (controls.move_left){
-			if (can_move(-1, 0)){
-				camera.position.x -= 1;
+			if (can_move(-speed, 0)){
+				camera.position.x -= speed;
 			}	
 		}
 		
 		if (controls.move_right){
-			if (can_move(1, 0)){
-				camera.position.x += 1;
+			if (can_move(speed, 0)){
+				camera.position.x += speed;
 			}	
 		}
 		
 		if (controls.move_up){
-			if (can_move(0, 1)){
-				camera.position.y += 1;
+			if (can_move(0, speed)){
+				camera.position.y += speed;
 			}	
 		}
 		
 		if (controls.move_down){
-			if (can_move(0, -1)){
-				camera.position.y -= 1;
+			if (can_move(0, -speed)){
+				camera.position.y -= speed;
 			}
 		}
 		
