@@ -13,8 +13,12 @@ public class Enums {
 	}
 	
 	public enum E_TYPE {
+		FLOOR,
+		BLOCKER,
+		GOAL,
 		SOLID,
-		MOVABLE;
+		MOVABLE, 
+		HERO;
 	}
 	
 	public enum ENEMY_TYPE {

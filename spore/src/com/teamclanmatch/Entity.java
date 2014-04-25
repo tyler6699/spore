@@ -20,6 +20,8 @@ public class Entity implements Comparable<Entity>{
 	public Vector2 current_position;
 	public Vector2 previous_position;
 	public Vector2 dest_position;
+	public int row;
+	public int column;
 	
 	// ENUMS
 	public ENEMY_TYPE enemy_type;

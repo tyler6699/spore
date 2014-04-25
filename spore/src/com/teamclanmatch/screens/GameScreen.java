@@ -2,7 +2,7 @@ package com.teamclanmatch.screens;
 
 import java.util.ArrayList;
 import java.util.Collections;
-
+import java.util.Iterator;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL10;
@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.teamclanmatch.Entity;
+import com.teamclanmatch.Enums.E_TYPE;
 import com.teamclanmatch.game.MainGame;
 import com.teamclanmatch.managers.Controller;
 import com.teamclanmatch.managers.Device;
@@ -24,7 +25,7 @@ public class GameScreen implements Screen {
 	private SpriteBatch batch;
 	private Device device;
 	private BitmapFont font;
-	private Texture texture, rock, hero, npc;
+	private Texture texture, rock, hero, npc, goal;
 	private Controller controls;
 	Entity e_hero;
 	
@@ -47,7 +48,6 @@ public class GameScreen implements Screen {
 		
 		// All Entities
 		entities = new ArrayList<Entity>();
-		
 		// FONT
 		font = new BitmapFont();
 		font.scale(1);
@@ -57,6 +57,7 @@ public class GameScreen implements Screen {
 		
 		texture = new Texture(Gdx.files.internal("data/32x32.png"));
 		rock  = new Texture(Gdx.files.internal("data/rock.png"));
+		goal  = new Texture(Gdx.files.internal("data/goal.png"));
 		npc  = new Texture(Gdx.files.internal("data/green.png"));
 		hero  = new Texture(Gdx.files.internal("data/blue.png"));
 		Gdx.input.setInputProcessor(controls);
@@ -66,20 +67,24 @@ public class GameScreen implements Screen {
 	
 	private void create_map(){
 		int SQUARE = 18;
-		for (int y = 0; y < SQUARE; y++) {
-			for (int x = 0; x < SQUARE; x++) {	
+		for (int y = 0; y <= SQUARE; y++) {
+			for (int x = 0; x <= SQUARE; x++) {	
 				Entity e = new Entity();
 				e.id = id;
 				e.name = "MAP";
+				e.e_type = E_TYPE.FLOOR;
 				e.w = 32;
 				e.h = 32;
+				e.row = x;
+				e.column = y;
 				e.current_position.x = x << 5;
 				e.current_position.y = y << 5;
 				e.hitbox = new Rectangle(e.current_position.x, e.current_position.y, e.w, e.h);
 				e.texture = texture;
+				entities.add(e);
 				
 				id += 1;
-				entities.add(e);
+				System.out.println(e.id + " :: Row: " + e.row + " Col: " + e.column + " x: " + e.current_position.x + " y: " + e.current_position.y);
 			}
 		}	
 		
@@ -88,13 +93,13 @@ public class GameScreen implements Screen {
 		e_hero.w = 16;
 		e_hero.h = 16;
 		e_hero.name = "HERO";
+		e_hero.e_type = E_TYPE.HERO;
 		e_hero.hitbox = new Rectangle(0,0,16,16);
 		e_hero.current_position.x = (camera.position.x + camera.viewportWidth/2) - e_hero.w/2;
 		e_hero.current_position.y = (camera.position.y + camera.viewportHeight/2) - e_hero.h/2;
 		e_hero.texture = hero;
-		id += 1;
-		entities.add(e_hero);
 		
+		entities.add(e_hero);
 	}
 	
 	@Override
@@ -106,7 +111,7 @@ public class GameScreen implements Screen {
 		batch.setProjectionMatrix(camera.combined);
 		
 		batch.begin();
-		batch.draw(texture, 0,0,64,64);
+		
 		for (Entity e: entities){
 			batch.draw(e.texture, e.current_position.x,e.current_position.y,e.w,e.h);
 		}
@@ -139,21 +144,53 @@ public class GameScreen implements Screen {
 			}
 		}
 		
-		if(!controls.processed_click){
-			System.out.println(controls.mouse_map_click_at.x);
+		if(!controls.processed_click){		
+			// May need to remove tiles
+			Iterator<Entity> tiles = entities.iterator();
+			
 			controls.processed_click = true;
-			Entity e = new Entity();
-			e.id = id;
-			e.name = "BLOCK";
-			e.w = 40;
-			e.h = 40;
-			e.current_position.x = controls.mouse_map_click_at.x - 16;
-			e.current_position.y = controls.mouse_map_click_at.y - 16;
-			e.hitbox = new Rectangle(e.current_position.x, e.current_position.y, e.w, e.h);
-			e.texture = rock;
-			id += 1;
-			entities.add(e);
+			
+			// find tile position
+			int row = Math.round((controls.mouse_map_click_at.x-16)/32);
+			int column = Math.round((controls.mouse_map_click_at.y-16)/32);	
+			
+			System.out.println(row + " " + column);
+			if (controls.LMB){		
+				
+				for(Entity entity : entities){
+					if (entity.row == row && entity.column == column && entity.e_type != E_TYPE.HERO){
+						if (entity.e_type == E_TYPE.BLOCKER){
+							entity.e_type = E_TYPE.FLOOR;
+							entity.texture = texture;
+							break;
+						} else {
+							entity.e_type = E_TYPE.BLOCKER;
+							entity.texture = rock;
+							break;
+						}
+					}
+				}
+				
+			} else {
+				for(Entity entity : entities){
+					if (entity.row == row && entity.column == column && entity.e_type != E_TYPE.HERO){
+						if (entity.e_type != E_TYPE.GOAL){
+							entity.e_type = E_TYPE.GOAL;
+							entity.texture = goal;
+						} else {			
+							entity.e_type = E_TYPE.FLOOR;
+							entity.texture = texture;
+						}
+					} else if (entity.e_type == E_TYPE.GOAL){ 
+						entity.e_type = E_TYPE.FLOOR;
+						entity.texture = texture;
+					}
+				}
+			}
+			
+			//System.out.println("Size: " + entities.size() + " id: " + e.id + " :: Row: " + e.row + " Col: " + e.column);
 		}
+		
 		e_hero.current_position.x = camera.position.x;
 		e_hero.current_position.y = camera.position.y;
 		e_hero.hitbox.set(e_hero.current_position.x, e_hero.current_position.y, e_hero.w, e_hero.h);
@@ -168,7 +205,7 @@ public class GameScreen implements Screen {
 		Rectangle rec = new Rectangle(tmp.x, tmp.y, e_hero.w, e_hero.h);
 		
 		for (Entity e: entities){
-			if(e.id != e_hero.id && e.name.equals("BLOCK")){
+			if(e.e_type == E_TYPE.BLOCKER){
 				if (e.hitbox.overlaps(rec)){
 					q = false;
 					break;
@@ -180,27 +217,20 @@ public class GameScreen implements Screen {
 	}
 
 	@Override
-    public void resize(int width, int height) {   
-    }
+    public void resize(int width, int height) {}
 
 	@Override
-    public void show() {   
-    }
+    public void show() {}
 
 	@Override
-    public void hide() {  
-    }
+    public void hide() {}
 
 	@Override
-    public void pause() {    
-    }
+    public void pause() {}
 
 	@Override
-    public void resume() {   
-    }
+    public void resume() {}
 
 	@Override
-    public void dispose() { 
-    }
-
+    public void dispose() {}
 }

@@ -89,6 +89,7 @@ public class Maths {
 		}
 	}
 	
+		
 //	void projectile(double velocity, double angle, Direction dir, float delta, float y_offset) {	
 //	DotArray.clear();
 //	double vx, vy, ux, uy, time_in_air;
