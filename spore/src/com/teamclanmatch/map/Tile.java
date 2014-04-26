@@ -6,7 +6,7 @@ import com.teamclanmatch.Enums.TILE_TYPE;
 
 public class Tile extends Entity{
 	public float path_h, path_g, path_f;
-	public int number;
+	public int number, parent_id;
 	public String name, code, sand_code, water_code, texture_name;
 	public TILE_TYPE tile_type;
 	public TextureRegion texture_region;
@@ -30,6 +30,7 @@ public class Tile extends Entity{
 	
 	public Tile(){
 		super();
+		parent_id = -1;
 	}
 
 	public int compareTo(Tile tile) {

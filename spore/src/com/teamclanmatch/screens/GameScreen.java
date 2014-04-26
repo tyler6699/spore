@@ -155,12 +155,12 @@ public class GameScreen implements Screen {
 				// SHOW ALL THE SURROUNDING TILES
 				mark_tile(current_tile.id -1);
 				mark_tile(current_tile.id +1);
-				mark_tile(current_tile.id +18);
-				mark_tile(current_tile.id +19);
-				mark_tile(current_tile.id +20);
-				mark_tile(current_tile.id -18);
-				mark_tile(current_tile.id -19);
-				mark_tile(current_tile.id -20);
+				mark_tile(current_tile.id +(SQUARE-1));
+				mark_tile(current_tile.id +SQUARE);
+				mark_tile(current_tile.id +(SQUARE+1));
+				mark_tile(current_tile.id -(SQUARE-1));
+				mark_tile(current_tile.id -SQUARE);
+				mark_tile(current_tile.id -(SQUARE+1));
 			}
 		}
 				
@@ -168,12 +168,36 @@ public class GameScreen implements Screen {
 		// System.out.println(e_hero.row + " " + e_hero.column + " y:" + e_hero.current_position.y);
     }
 	
-	private void mark_tile(int tile_id){
+	private void mark_tile(int tile_id){		
 		if (tile_id <= tiles.size()){
 			Tile t = tiles.get(tile_id);
-			t.texture = yes_path;
-		}
+			
+			t.path_h = calculate_dist((t.current_position.x + 16), (t.current_position.y + 16), target_x, target_y);
+			t.path_g =  calculate_dist(origin_x, origin_y, (t.current_position.x + 16), (t.current_position.y + 16));
+			t.path_f = t.path_g + t.path_h;
+			
+			//System.out.println(tile_id + " H: " + t.path_h + " G: " + t.path_g + " F: " + t.path_f);
+			if(t.e_type == E_TYPE.FLOOR){
+				// ADD TO OPEN
+				// Add Parent
+				t.texture = yes_path;
+			}
+		}	
+	}
+	
+	private float calculate_dist(float orig_x,float orig_y,float targ_x,float targ_y){
+		// USED TO CALCULATE H & G VALUES
+		float h, dist_x, dist_y ;
 		
+		dist_x = Math.abs(orig_x - targ_x);
+		dist_y = Math.abs(orig_y - targ_y);
+		
+		if (dist_x > dist_y){
+			h = 14*dist_y + 10*(dist_x-dist_y);
+		} else {
+			h = 14*dist_x + 10*(dist_y-dist_x);
+		}
+		return h/10;
 	}
 	
 	private void update_hero_values() {
