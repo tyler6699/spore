@@ -32,6 +32,8 @@ public class GameScreen implements Screen {
 	// Entity ID
 	int id 	= 0;
 	float speed = 2;
+	boolean has_target = false;
+	float target_x, target_y;
 	
 	public GameScreen(MainGame game) {
 		this.game = game;
@@ -85,7 +87,7 @@ public class GameScreen implements Screen {
 				entities.add(e);
 				
 				id += 1;
-				System.out.println(e.id + " :: Row: " + e.row + " Col: " + e.column + " x: " + e.current_position.x + " y: " + e.current_position.y);
+				//System.out.println(e.id + " :: Row: " + e.row + " Col: " + e.column + " x: " + e.current_position.x + " y: " + e.current_position.y);
 			}
 		}	
 		
@@ -155,9 +157,8 @@ public class GameScreen implements Screen {
 			int row = Math.round((controls.mouse_map_click_at.x-16)/32);
 			int column = Math.round((controls.mouse_map_click_at.y-16)/32);	
 			
-			System.out.println(row + " " + column);
+			//System.out.println(row + " " + column);
 			if (controls.LMB){		
-				
 				for(Entity entity : entities){
 					if (entity.row == row && entity.column == column && entity.e_type != E_TYPE.HERO){
 						if (entity.e_type == E_TYPE.BLOCKER){
@@ -176,9 +177,13 @@ public class GameScreen implements Screen {
 				for(Entity entity : entities){
 					if (entity.row == row && entity.column == column && entity.e_type != E_TYPE.HERO){
 						if (entity.e_type != E_TYPE.GOAL){
+							has_target = true;
+							target_x = entity.current_position.x + 16;
+							target_y = entity.current_position.y + 16;
 							entity.e_type = E_TYPE.GOAL;
 							entity.texture = goal;
-						} else {			
+						} else {	
+							has_target = false;
 							entity.e_type = E_TYPE.FLOOR;
 							entity.texture = texture;
 						}
@@ -190,12 +195,23 @@ public class GameScreen implements Screen {
 			}
 			
 			//System.out.println("Size: " + entities.size() + " id: " + e.id + " :: Row: " + e.row + " Col: " + e.column);
+			// Calculate Distance to Target
+			if (has_target){
+				float xDistance = Math.abs(((e_hero.row*32)+16) - target_x);
+				float yDistance = Math.abs(((e_hero.column*32)+16) - target_y);
+				float h = (xDistance + yDistance);
+				System.out.println(h);
+			}
 		}
 		
+		// HERO
 		e_hero.current_position.x = camera.position.x;
 		e_hero.current_position.y = camera.position.y;
 		e_hero.hitbox.set(e_hero.current_position.x, e_hero.current_position.y, e_hero.w, e_hero.h);
+		e_hero.row = Math.round((e_hero.current_position.x)/32);
+		e_hero.column = Math.round((e_hero.current_position.y)/32);	
 		camera.update();
+		//System.out.println(e_hero.row + " " + e_hero.column);
     }
 	
 	private boolean can_move(float xx, float yy){
