@@ -47,7 +47,7 @@ public class Controller extends InputAdapter implements InputProcessor {
 	public Boolean move_down  = false;
 	public Boolean LMB        = false;
 	public Boolean RMB        = false;
-	public Boolean jump       = false;
+	public Boolean spacebar   = false;
 	public Boolean rotate_ac  = false;
 	public Boolean paused     = false;
 	
@@ -164,7 +164,8 @@ public class Controller extends InputAdapter implements InputProcessor {
 			move_right = true;
 			break;
 		case Keys.SPACE:
-			LMB       = true;
+			
+			spacebar   = true;
 			break;
 		case Keys.Y:
 			break;

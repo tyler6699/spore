@@ -40,6 +40,9 @@ public class Enums {
 	
 	public enum TILE_TYPE {
 		EMPTY,
+		FLOOR,
+		BLOCKER,
+		GOAL,
 		CRATE,
 		MANA,
 		HERO,
