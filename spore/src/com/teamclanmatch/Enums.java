@@ -38,6 +38,12 @@ public class Enums {
 		NONE;
 	}
 	
+	public enum ASTAR {
+		OPEN, 
+		CLOSED,
+		NULL
+	}
+	
 	public enum TILE_TYPE {
 		EMPTY,
 		FLOOR,

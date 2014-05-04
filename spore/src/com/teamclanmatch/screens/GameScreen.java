@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.teamclanmatch.Entity;
+import com.teamclanmatch.Enums.ASTAR;
 import com.teamclanmatch.Enums.E_TYPE;
 import com.teamclanmatch.game.MainGame;
 import com.teamclanmatch.managers.Controller;
@@ -22,7 +23,10 @@ public class GameScreen implements Screen {
 	
 	public ArrayList<Entity> entities;
 	public ArrayList<Tile> tiles;
+	public ArrayList<Tile> open_tiles;
+	public Tile lowest_tile;
 	public Tile current_tile;
+	public boolean search_over, reset_states;
 	int column, row;
 	
 	private OrthographicCamera camera;
@@ -38,6 +42,7 @@ public class GameScreen implements Screen {
 	int SQUARE = 19;
 	float speed = 3;
 	boolean has_target = false;
+	boolean found_open = false;
 	float target_x, target_y, origin_x, origin_y;
 	
 	public GameScreen(MainGame game) {
@@ -57,6 +62,7 @@ public class GameScreen implements Screen {
 		// All Entities
 		entities = new ArrayList<Entity>();
 		tiles = new ArrayList<Tile>();
+		open_tiles = new ArrayList<Tile>();
 		
 		// FONT
 		font = new BitmapFont();
@@ -114,6 +120,8 @@ public class GameScreen implements Screen {
 		e_hero.texture = hero;
 		
 		entities.add(e_hero);
+		search_over = true;
+		reset_states = false;
 	}
 	
 	@Override
@@ -128,59 +136,97 @@ public class GameScreen implements Screen {
 		for (Entity e: entities){
 			batch.draw(e.texture, e.current_position.x,e.current_position.y, e.w, e.h);
 		}
+		
+		if (lowest_tile != null){
+			batch.draw(no_path, lowest_tile.current_position.x,lowest_tile.current_position.y, lowest_tile.w, lowest_tile.h);
+		}
 		batch.end();
 		
 		// PROCESSES
 		process_movements();
 		process_tile_changes();
-		update_hero_values();	
-		set_current_hero_tile();		
+		update_hero_values();			
 		
 		// RUN PATH FINDING IF SPACE IS PRESSED
 		if (controls.spacebar == true){
+			set_current_hero_tile();
+			search_over = false;
 			controls.spacebar = false;
-			//System.out.println("Size: " + entities.size() + " id: " + e.id + " :: Row: " + e.row + " Col: " + e.column);
-			// Calculate Distance to Target
-			if (has_target){
-				float xDistance = Math.abs(origin_x - target_x);
-				float yDistance = Math.abs(origin_y - target_y);
-				float h = 0;
-				
-				if (xDistance > yDistance){
-					h = 14*yDistance + 10*(xDistance-yDistance);
-				} else {
-					h = 14*xDistance + 10*(yDistance-xDistance);
+		}
+			
+		if (search_over){
+			if (reset_states){
+				System.out.println("");
+				for (Tile t: tiles){
+					t.state = ASTAR.NULL;
+					if (t.texture == yes_path){
+						t.texture = texture;
+					}
 				}
 				
-				// SHOW ALL THE SURROUNDING TILES
-				mark_tile(current_tile.id -1);
-				mark_tile(current_tile.id +1);
-				mark_tile(current_tile.id +(SQUARE-1));
-				mark_tile(current_tile.id +SQUARE);
-				mark_tile(current_tile.id +(SQUARE+1));
-				mark_tile(current_tile.id -(SQUARE-1));
-				mark_tile(current_tile.id -SQUARE);
-				mark_tile(current_tile.id -(SQUARE+1));
+				set_current_hero_tile();
+				reset_states = false;
+			}
+		} else {
+			if (has_target){	
+				System.out.println("Open Tiles: " + open_tiles.size());
+				// SHOW ALL THE SURROUNDING TILES		
+				int prev = current_tile.id;
+				mark_tile(current_tile.id, current_tile.id -1);
+				mark_tile(current_tile.id, current_tile.id +1);
+				mark_tile(current_tile.id, current_tile.id +(SQUARE-1));
+				mark_tile(current_tile.id, current_tile.id +SQUARE);
+				mark_tile(current_tile.id, current_tile.id +(SQUARE+1));
+				mark_tile(current_tile.id, current_tile.id -(SQUARE-1));
+				mark_tile(current_tile.id, current_tile.id -SQUARE);
+				mark_tile(current_tile.id, current_tile.id -(SQUARE+1));
+				lowest_tile = null;
+				for (Tile t : open_tiles){
+					if (lowest_tile == null || (t.path_f <= current_tile.path_f)) {
+						if (t.state == ASTAR.OPEN){
+							lowest_tile = t;	
+						}
+					}
+				}
+				
+				lowest_tile.state = ASTAR.CLOSED;
+				lowest_tile.texture = texture;
+				
+				System.out.println("Open Tiles: " + open_tiles.size() + " lowest is:" + lowest_tile.id + "(" +lowest_tile.path_f + ")");
+				if (prev == lowest_tile.id){
+
+				} else {
+					current_tile = lowest_tile;
+					current_tile.state = ASTAR.CLOSED;
+					
+					if (current_tile.path_h <= 32){
+						System.out.println("DONE");
+						search_over = true;
+						reset_states = true;
+						open_tiles.clear();
+					}	
+				}
 			}
 		}
-				
+	
 		camera.update();
 		// System.out.println(e_hero.row + " " + e_hero.column + " y:" + e_hero.current_position.y);
     }
 	
-	private void mark_tile(int tile_id){		
-		if (tile_id <= tiles.size()){
+	private void mark_tile(int parent_id, int tile_id){		
+		if (tile_id < tiles.size() && tile_id >= 0){
 			Tile t = tiles.get(tile_id);
 			
 			t.path_h = calculate_dist((t.current_position.x + 16), (t.current_position.y + 16), target_x, target_y);
 			t.path_g =  calculate_dist(origin_x, origin_y, (t.current_position.x + 16), (t.current_position.y + 16));
 			t.path_f = t.path_g + t.path_h;
 			
-			//System.out.println(tile_id + " H: " + t.path_h + " G: " + t.path_g + " F: " + t.path_f);
-			if(t.e_type == E_TYPE.FLOOR){
-				// ADD TO OPEN
-				// Add Parent
+			if(t.e_type == E_TYPE.FLOOR &&  t.state != ASTAR.CLOSED){
+				open_tiles.add(t);
+				System.out.println("Added: " + t.id + " f: " + t.path_f);
+				t.state = ASTAR.OPEN;
 				t.texture = yes_path;
+				t.parent_id = parent_id;
 			}
 		}	
 	}
