@@ -28,8 +28,15 @@ public class GameScreen implements Screen {
 	public Tile lowest_tile;
 	public Tile current_tile;
 	public Tile start_tile;
+	public int tile_size;
 	public boolean search_over, reset_states;
-	int column, row;
+	int column, row, round;
+	
+	// METHODS
+	boolean F, G, H;
+	int method;
+	float low_check = 0;
+	float tile_check = 0;
 	
 	private OrthographicCamera camera;
 	private SpriteBatch batch;
@@ -60,6 +67,12 @@ public class GameScreen implements Screen {
 		batch = new SpriteBatch();
 		batch.setProjectionMatrix(camera.combined);
 		controls = new Controller(camera);
+		tile_size = 50;
+		// METHODS
+		F = true;
+		G = false;
+		H = false;
+		method = 0;
 		
 		// All Entities
 		entities = new ArrayList<Entity>();
@@ -69,7 +82,7 @@ public class GameScreen implements Screen {
 		
 		// FONT
 		font = new BitmapFont();
-		font.scale(.2F);
+		font.scale(.1F);
 		
 		// Hide Cursor
 		//Gdx.input.setCursorCatched(!Gdx.input.isCursorCatched());
@@ -95,12 +108,12 @@ public class GameScreen implements Screen {
 				t.id = id;
 				t.name = "MAP";
 				t.e_type = E_TYPE.FLOOR;
-				t.w = 32;
-				t.h = 32;
+				t.w = tile_size;
+				t.h = tile_size;
 				t.row = y;
 				t.column = x;
-				t.current_position.x = x << 5;
-				t.current_position.y = y << 5;
+				t.current_position.x = x * tile_size;
+				t.current_position.y = y * tile_size;
 				t.hitbox = new Rectangle(t.current_position.x, t.current_position.y, t.w, t.h);
 				t.texture = texture;
 				
@@ -143,12 +156,12 @@ public class GameScreen implements Screen {
 		
 		// RUN PATH FINDING IF SPACE IS PRESSED
 		if (controls.spacebar == true){
+			RESET_SEARCH();
 			set_current_hero_tile();
 			search_over = false;
 			controls.spacebar = false;
 		}
 			
-		RESET_SEARCH();
 		A_STAR_SEARCH();
 	
 		camera.update();
@@ -159,19 +172,26 @@ public class GameScreen implements Screen {
 		if (!search_over && has_target){
 			while (!search_over){
 				//System.out.println("Open Tiles: " + open_tiles.size());
+				round ++;
 				int prev = current_tile.id;
+				
 				mark_tile(current_tile.id, current_tile.id -1);
 				mark_tile(current_tile.id, current_tile.id +1);
-				//mark_tile(current_tile.id, current_tile.id +(SQUARE-1));
-				mark_tile(current_tile.id, current_tile.id +SQUARE);
-				//mark_tile(current_tile.id, current_tile.id +(SQUARE+1));
-				//mark_tile(current_tile.id, current_tile.id -(SQUARE-1));
 				mark_tile(current_tile.id, current_tile.id -SQUARE);
-				//mark_tile(current_tile.id, current_tile.id -(SQUARE+1));
+				mark_tile(current_tile.id, current_tile.id +SQUARE);
+				
+				// DIAGS
+				mark_tile(current_tile.id, current_tile.id +(SQUARE-1));
+				mark_tile(current_tile.id, current_tile.id +(SQUARE+1));
+				mark_tile(current_tile.id, current_tile.id -(SQUARE-1));
+				mark_tile(current_tile.id, current_tile.id -(SQUARE+1));
 				lowest_tile = null;
 				
 				for (Tile t : open_tiles){
-					if (lowest_tile == null || (t.path_f <= current_tile.path_f && t.path_h <= current_tile.path_h && t.path_g <= current_tile.path_g)) {
+					if (lowest_tile != null){
+						low_check = lowest_tile.path_f;
+					}
+					if (lowest_tile == null || (t.path_f <= low_check)) {
 						if (t.state != ASTAR.CLOSED){
 							lowest_tile = t;	
 						}
@@ -189,7 +209,7 @@ public class GameScreen implements Screen {
 						current_tile = lowest_tile;
 						current_tile.state = ASTAR.CLOSED;
 						
-						if (current_tile.path_h <= 32){
+						if (current_tile.path_h <= tile_size){
 							// Get Path
 							path.clear();
 							int step_count = 0;
@@ -202,7 +222,7 @@ public class GameScreen implements Screen {
 									//System.out.println(step_count + " ID: " + current_tile.id + " F: " + current_tile.path_f + " H: " + current_tile.path_h);
 									step_count ++;
 								} else {
-									System.out.println(current_tile.id + " " + current_tile.path_f);
+									// System.out.println(current_tile.id + " " + current_tile.path_f);
 								}
 							}
 							
@@ -217,12 +237,20 @@ public class GameScreen implements Screen {
     }
 
 	private void mark_tile(int parent_id, int tile_id){		
+		Tile parent = tiles.get(parent_id);
+		float tile_x, tile_y;
+		
+		origin_x = parent.current_position.x + (tile_size/2);
+		origin_y = parent.current_position.y + (tile_size/2);
+		
 		if (tile_id < tiles.size() && tile_id >= 0){
 			Tile t = tiles.get(tile_id);
+			tile_x = t.current_position.x + (tile_size/2);
+			tile_y = t.current_position.y + (tile_size/2);
 			
 			if(t.e_type == E_TYPE.FLOOR && t.state != ASTAR.CLOSED){	
-				t.path_h = calculate_dist((t.current_position.x + 16), (t.current_position.y + 16), target_x, target_y);
-				t.path_g =  calculate_dist(origin_x, origin_y, (t.current_position.x + 16), (t.current_position.y + 16));
+				t.path_h = (calculate_dist(tile_x, tile_y, target_x, target_y, false));
+				t.path_g = parent.path_g + (calculate_dist(origin_x,origin_y,tile_x,tile_y, false));
 				t.path_f = t.path_g + t.path_h;
 				t.state = ASTAR.OPEN;
 				t.parent_id = parent_id;
@@ -241,9 +269,21 @@ public class GameScreen implements Screen {
 		int i = 0;
 		for (Entity e: path){
 			batch.draw(no_path, e.current_position.x,e.current_position.y, e.w, e.h);
-			font.draw(batch, i + "", e.current_position.x+8, e.current_position.y+22);
+			//font.draw(batch, i + "", e.current_position.x+8, e.current_position.y+22);
 			i++;
 		}
+		
+		for (Tile t: tiles){
+			if (t.path_f > 0){
+				int x = (int) t.path_f;
+				font.draw(batch, x+"", (t.column*tile_size)+5, (t.row*tile_size)+60);
+				//x = (int) t.path_g;
+				//font.draw(batch, x+"", (t.column*tile_size)+5, (t.row*tile_size)+20);
+				x = (int) t.path_h;
+				font.draw(batch, x+"", (t.column*tile_size)+33, (t.row*tile_size)+20);
+			}
+		}
+		
 		batch.end(); 
     }
 
@@ -252,6 +292,9 @@ public class GameScreen implements Screen {
 			for (Tile t: tiles){
 				t.state = ASTAR.NULL;
 				t.parent_id = 0;
+				t.path_f = 0;
+				t.path_g = 0;
+				t.path_h = 0;
 			}
 			open_tiles.clear();
 			set_current_hero_tile();
@@ -259,19 +302,25 @@ public class GameScreen implements Screen {
 		}
     }
 	
-	private float calculate_dist(float orig_x,float orig_y,float targ_x,float targ_y){
+	private float calculate_dist(float orig_x,float orig_y,float targ_x,float targ_y, boolean diagonal){
 		// USED TO CALCULATE H & G VALUES
 		float h, dist_x, dist_y ;
 		
-		dist_x = Math.abs(orig_x - targ_x);
-		dist_y = Math.abs(orig_y - targ_y);
-		
-		if (dist_x > dist_y){
-			h = 14*dist_y + 10*(dist_x-dist_y);
+		if (diagonal){
+			dist_x = Math.abs(orig_x - targ_x);
+			dist_y = Math.abs(orig_y - targ_y);
+			
+			if (dist_x > dist_y){
+				h = 14*dist_y + 10*(dist_x-dist_y);
+			} else {
+				h = 14*dist_x + 10*(dist_y-dist_x);
+			}
+			return h/10;
 		} else {
-			h = 14*dist_x + 10*(dist_y-dist_x);
+			h = (Math.abs(orig_x-targ_x) + Math.abs(orig_y-targ_y));
+			return h;
 		}
-		return h/10;
+		
 	}
 	
 	private void update_hero_values() {
@@ -280,12 +329,12 @@ public class GameScreen implements Screen {
 		e_hero.current_position.y = camera.position.y - 8;
 		e_hero.hitbox.set(e_hero.current_position.x, e_hero.current_position.y, e_hero.w, e_hero.h);
 		
-		e_hero.column = Math.round((e_hero.current_position.x-8)/32);
-		e_hero.row = Math.round((e_hero.current_position.y-8)/32);	
+		e_hero.column = Math.round((e_hero.current_position.x-8)/tile_size);
+		e_hero.row = Math.round((e_hero.current_position.y-8)/tile_size);	
 		
 		// CENTRE OF HEROS TILE
-		origin_x = (e_hero.column * 32) + 16;
-		origin_y = (e_hero.row * 32) + 16;
+		origin_x = (e_hero.column * tile_size) + 16;
+		origin_y = (e_hero.row * tile_size) + 16;
 	}
 
 	private void process_tile_changes() {
@@ -296,8 +345,8 @@ public class GameScreen implements Screen {
 			controls.processed_click = true;
 			
 			// find tile position
-			column = Math.round((controls.mouse_map_click_at.x-16)/32);
-			row = Math.round((controls.mouse_map_click_at.y-16)/32);	
+			column = Math.round((controls.mouse_map_click_at.x-(tile_size/2))/tile_size);
+			row = Math.round((controls.mouse_map_click_at.y-(tile_size/2))/tile_size);	
 			
 			if (controls.LMB){		
 				for(Tile t : tiles){
@@ -319,8 +368,8 @@ public class GameScreen implements Screen {
 					if (t.row == row && t.column == column){
 						if (t.e_type != E_TYPE.GOAL){
 							has_target = true;
-							target_x = t.current_position.x + 16;
-							target_y = t.current_position.y + 16;
+							target_x = t.current_position.x + (tile_size/2);
+							target_y = t.current_position.y + (tile_size/2);
 							t.e_type = E_TYPE.GOAL;
 							t.texture = goal;
 						} else {	

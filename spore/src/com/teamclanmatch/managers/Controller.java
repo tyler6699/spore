@@ -51,6 +51,8 @@ public class Controller extends InputAdapter implements InputProcessor {
 	public Boolean rotate_ac  = false;
 	public Boolean paused     = false;
 	
+	public Boolean change     = false;
+	
 	public Controller(OrthographicCamera camera){
 		this.camera     = camera;
 		this.mouse_screen_click_at = new Vector2();
@@ -164,9 +166,12 @@ public class Controller extends InputAdapter implements InputProcessor {
 			move_right = true;
 			break;
 		case Keys.SPACE:
-			
 			spacebar   = true;
 			break;
+		case Keys.M:
+			change = true;
+			break;
+			
 		case Keys.Y:
 			break;
 		case Keys.P:
