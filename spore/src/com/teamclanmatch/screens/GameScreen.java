@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
 import com.teamclanmatch.Entity;
 import com.teamclanmatch.Enums.ASTAR;
 import com.teamclanmatch.Enums.E_TYPE;
@@ -26,13 +27,15 @@ public class GameScreen implements Screen {
 	public ArrayList<Entity> entities;
 	public ArrayList<Tile> tiles;
 	public ArrayList<Tile> open_tiles;
+
+	public int[] find_tiles;
 	public ArrayList<Tile> path;
 	public Tile lowest_tile;
 	public Tile current_tile;
 	public Tile start_tile;
 	public int tile_size;
 	public boolean search_over, reset_states;
-	int column, row, round;
+	int column, row;
 	
 	// TEST
 	boolean step = false;
@@ -86,7 +89,8 @@ public class GameScreen implements Screen {
 		tiles = new ArrayList<Tile>();
 		open_tiles = new ArrayList<Tile>();
 		path = new ArrayList<Tile>();
-		
+		find_tiles = new int[] {1, -1, -SQUARE, SQUARE, SQUARE-1, SQUARE+1, -(SQUARE-1), -(SQUARE+1)};
+
 		// FONT
 		font = new BitmapFont();
 		font.scale(.1F);
@@ -180,20 +184,13 @@ public class GameScreen implements Screen {
 			current_tile.state = ASTAR.CLOSED;
 			
 			while (!search_over){
-				round ++;
-				
-				mark_tile(current_tile.id, current_tile.id -1, 10);
-				mark_tile(current_tile.id, current_tile.id +1, 10);
-				mark_tile(current_tile.id, current_tile.id -SQUARE, 10);
-				mark_tile(current_tile.id, current_tile.id +SQUARE, 10);
-				
-				// DIAGS
-				mark_tile(current_tile.id, current_tile.id +(SQUARE-1), 14);
-				mark_tile(current_tile.id, current_tile.id +(SQUARE+1), 14);
-				mark_tile(current_tile.id, current_tile.id -(SQUARE-1), 14);
-				mark_tile(current_tile.id, current_tile.id -(SQUARE+1), 14);
+				int move;
+				for(int i = 0; i < 8; i++){
+					move = i < 4? 10 : 14;
+					mark_tile(current_tile.id, current_tile.id + find_tiles[i] , move);
+				}
+
 				lowest_tile = null;
-				
 				for (Tile t : open_tiles){
 					if (lowest_tile != null){
 						low_check = lowest_tile.path_f;
