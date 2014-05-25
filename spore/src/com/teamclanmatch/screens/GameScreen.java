@@ -1,8 +1,6 @@
 package com.teamclanmatch.screens;
 
 import java.util.ArrayList;
-import java.util.Collections;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL10;
@@ -12,7 +10,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Array;
 import com.teamclanmatch.Entity;
 import com.teamclanmatch.Enums.ASTAR;
 import com.teamclanmatch.Enums.E_TYPE;
@@ -51,7 +48,7 @@ public class GameScreen implements Screen {
 	private SpriteBatch batch;
 	private Device device;
 	private BitmapFont font;
-	private Texture texture, rock, hero, npc, goal, no_path, yes_path, current;
+	private Texture texture, rock, hero, goal, no_path, current;
 	private Controller controls;
 	Entity e_hero;
 	
@@ -101,10 +98,8 @@ public class GameScreen implements Screen {
 		texture  = new Texture(Gdx.files.internal("data/32x32.png"));
 		rock     = new Texture(Gdx.files.internal("data/rock.png"));
 		goal     = new Texture(Gdx.files.internal("data/goal.png"));
-		npc      = new Texture(Gdx.files.internal("data/green.png"));
 		hero     = new Texture(Gdx.files.internal("data/blue.png"));
 		no_path  = new Texture(Gdx.files.internal("data/path-no.png"));
-		yes_path = new Texture(Gdx.files.internal("data/path-yes.png"));
 		current  = new Texture(Gdx.files.internal("data/current.png"));
 		
 		Gdx.input.setInputProcessor(controls);
@@ -191,10 +186,9 @@ public class GameScreen implements Screen {
 				}
 
 				lowest_tile = null;
-				for (Tile t : open_tiles){
-					if (lowest_tile != null){
-						low_check = lowest_tile.path_f;
-					}
+				for (Tile t : open_tiles){	
+					low_check = lowest_tile != null? lowest_tile.path_f: low_check;
+
 					if (lowest_tile == null || (t.path_f <= low_check)) {
 						if (t.state != ASTAR.CLOSED){
 							lowest_tile = t;	
@@ -231,9 +225,6 @@ public class GameScreen implements Screen {
 	private void mark_tile(int parent_id, int tile_id, int move_cost){		
 		Tile parent = tiles.get(parent_id);
 		float tile_x, tile_y;
-
-		origin_x = start_tile.current_position.x + (tile_size/2);
-		origin_y = start_tile.current_position.y + (tile_size/2);
 		
 		if (tile_id < tiles.size() && tile_id >= 0){
 			Tile t = tiles.get(tile_id);
@@ -242,18 +233,12 @@ public class GameScreen implements Screen {
 			
 			if(t.e_type == E_TYPE.FLOOR && t.state != ASTAR.CLOSED){
 				if (t.state == ASTAR.OPEN){
-					//System.out.println("Move from: " + parent_id + " to to tile: " + t.id +  " is " + move_cost );	
-					//System.out.println("Move cost from parent(" + parent.parent_id + ")" + " was: " + parent.path_g);	
-					//Tile test = tiles.get(parent.parent_id);
-					//float gg = calculate_dist(test.current_position.x + (tile_size/2), test.current_position.x + (tile_size/2), tile_x, tile_y, false);
-					
-					//System.out.println("Move cost from parent(" + parent.parent_id + ") to: " + t.id + " would be: " + gg);
-					//System.out.println("here");
+					// Check if previous parent should have moved here instead?
 				} else { // NEW TILE ADD TO OPEN
 					t.parent_id = parent_id;
 					t.state = ASTAR.OPEN;
 					t.path_h = (calculate_dist(tile_x, tile_y, target_x, target_y, true));
-					int tt = calculate_dist(parent.current_position.x + (tile_size/2), parent.current_position.y + (tile_size/2), tile_x, tile_y, false);
+					//int tt = calculate_dist(parent.current_position.x + (tile_size/2), parent.current_position.y + (tile_size/2), tile_x, tile_y, false);
 					t.path_g = parent.path_g + move_cost;	
 					t.path_f = t.path_g + t.path_h;
 									
