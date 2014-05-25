@@ -122,7 +122,7 @@ public class Controller extends InputAdapter implements InputProcessor {
 
 	@Override
 	public boolean scrolled(int amount) {
-		camera.zoom += amount;
+		camera.zoom += amount*10;
 		camera.update();
 		System.out.println(camera.zoom);
 		return false;

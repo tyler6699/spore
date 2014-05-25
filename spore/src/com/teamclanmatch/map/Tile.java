@@ -38,10 +38,10 @@ public class Tile extends Entity{
 	}
 
 	public int compareTo(Tile tile) {
-		float temp_y = tile.number;
-		float compare_y = this.number;
+		float temp_f = tile.path_f;
+		float compare_f = this.path_f;
 		
-		return (temp_y > compare_y ) ? -1: (temp_y < compare_y) ? 1:0 ;
+		return (temp_f > compare_f ) ? -1: (temp_f < compare_f) ? 1:0 ;
 	}
-	
+		
 }

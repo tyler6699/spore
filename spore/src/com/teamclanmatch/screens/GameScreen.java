@@ -1,6 +1,8 @@
 package com.teamclanmatch.screens;
 
 import java.util.ArrayList;
+import java.util.Collections;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL10;
@@ -32,6 +34,10 @@ public class GameScreen implements Screen {
 	public boolean search_over, reset_states;
 	int column, row, round;
 	
+	// TEST
+	boolean step = false;
+	boolean breaks = false;
+	
 	// METHODS
 	boolean F, G, H;
 	int method;
@@ -48,6 +54,7 @@ public class GameScreen implements Screen {
 	
 	// Entity ID
 	int id 	= 0;
+	int min_distance = 3;
 	int SQUARE = 19;
 	float speed = 3;
 	boolean has_target = false;
@@ -67,7 +74,7 @@ public class GameScreen implements Screen {
 		batch = new SpriteBatch();
 		batch.setProjectionMatrix(camera.combined);
 		controls = new Controller(camera);
-		tile_size = 50;
+		tile_size = 32;
 		// METHODS
 		F = true;
 		G = false;
@@ -161,7 +168,7 @@ public class GameScreen implements Screen {
 			search_over = false;
 			controls.spacebar = false;
 		}
-			
+					
 		A_STAR_SEARCH();
 	
 		camera.update();
@@ -170,21 +177,21 @@ public class GameScreen implements Screen {
 	
 	private void A_STAR_SEARCH() {
 		if (!search_over && has_target){
+			current_tile.state = ASTAR.CLOSED;
+			
 			while (!search_over){
-				//System.out.println("Open Tiles: " + open_tiles.size());
 				round ++;
-				int prev = current_tile.id;
 				
-				mark_tile(current_tile.id, current_tile.id -1);
-				mark_tile(current_tile.id, current_tile.id +1);
-				mark_tile(current_tile.id, current_tile.id -SQUARE);
-				mark_tile(current_tile.id, current_tile.id +SQUARE);
+				mark_tile(current_tile.id, current_tile.id -1, 10);
+				mark_tile(current_tile.id, current_tile.id +1, 10);
+				mark_tile(current_tile.id, current_tile.id -SQUARE, 10);
+				mark_tile(current_tile.id, current_tile.id +SQUARE, 10);
 				
 				// DIAGS
-				mark_tile(current_tile.id, current_tile.id +(SQUARE-1));
-				mark_tile(current_tile.id, current_tile.id +(SQUARE+1));
-				mark_tile(current_tile.id, current_tile.id -(SQUARE-1));
-				mark_tile(current_tile.id, current_tile.id -(SQUARE+1));
+				mark_tile(current_tile.id, current_tile.id +(SQUARE-1), 14);
+				mark_tile(current_tile.id, current_tile.id +(SQUARE+1), 14);
+				mark_tile(current_tile.id, current_tile.id -(SQUARE-1), 14);
+				mark_tile(current_tile.id, current_tile.id -(SQUARE+1), 14);
 				lowest_tile = null;
 				
 				for (Tile t : open_tiles){
@@ -197,65 +204,65 @@ public class GameScreen implements Screen {
 						}
 					}
 				}
-				
+								
 				if (lowest_tile == null){
 					System.out.println("NO PATH");
 					search_over = true;
 				} else {
-					//System.out.println("Open Tiles: " + open_tiles.size() + " lowest is:" + lowest_tile.id + "(" +lowest_tile.path_f + ")");
-					if (prev == lowest_tile.id){
-	
-					} else {
-						current_tile = lowest_tile;
-						current_tile.state = ASTAR.CLOSED;
-						
-						if (current_tile.path_h <= tile_size){
-							// Get Path
-							path.clear();
-							int step_count = 0;
-							path.add(current_tile);
-							step_count ++;
-							while (current_tile.id != start_tile.id ){
-								current_tile = tiles.get(current_tile.parent_id);
-								if (current_tile.state == ASTAR.CLOSED){
-									path.add(current_tile);	
-									//System.out.println(step_count + " ID: " + current_tile.id + " F: " + current_tile.path_f + " H: " + current_tile.path_h);
-									step_count ++;
-								} else {
-									// System.out.println(current_tile.id + " " + current_tile.path_f);
-								}
+					current_tile = lowest_tile;
+					current_tile.state = ASTAR.CLOSED;
+					
+					if (current_tile.path_h <= min_distance){
+						// Get Path
+						path.clear();
+						path.add(current_tile);
+
+						while (current_tile.id != start_tile.id ){
+							current_tile = tiles.get(current_tile.parent_id);
+							if (current_tile.state == ASTAR.CLOSED){
+								path.add(current_tile);	
 							}
-							
-							System.out.println("STEPS: " + step_count);
-							search_over = true;
-							reset_states = true;
-						}	
-					}
+						}
+						search_over = true;
+						reset_states = true;
+					}	
 				}
 			}
 		}
     }
 
-	private void mark_tile(int parent_id, int tile_id){		
+	private void mark_tile(int parent_id, int tile_id, int move_cost){		
 		Tile parent = tiles.get(parent_id);
 		float tile_x, tile_y;
-		
-		origin_x = parent.current_position.x + (tile_size/2);
-		origin_y = parent.current_position.y + (tile_size/2);
+
+		origin_x = start_tile.current_position.x + (tile_size/2);
+		origin_y = start_tile.current_position.y + (tile_size/2);
 		
 		if (tile_id < tiles.size() && tile_id >= 0){
 			Tile t = tiles.get(tile_id);
 			tile_x = t.current_position.x + (tile_size/2);
 			tile_y = t.current_position.y + (tile_size/2);
 			
-			if(t.e_type == E_TYPE.FLOOR && t.state != ASTAR.CLOSED){	
-				t.path_h = (calculate_dist(tile_x, tile_y, target_x, target_y, false));
-				t.path_g = parent.path_g + (calculate_dist(origin_x,origin_y,tile_x,tile_y, false));
-				t.path_f = t.path_g + t.path_h;
-				t.state = ASTAR.OPEN;
-				t.parent_id = parent_id;
-				
-				open_tiles.add(t);
+			if(t.e_type == E_TYPE.FLOOR && t.state != ASTAR.CLOSED){
+				if (t.state == ASTAR.OPEN){
+					//System.out.println("Move from: " + parent_id + " to to tile: " + t.id +  " is " + move_cost );	
+					//System.out.println("Move cost from parent(" + parent.parent_id + ")" + " was: " + parent.path_g);	
+					//Tile test = tiles.get(parent.parent_id);
+					//float gg = calculate_dist(test.current_position.x + (tile_size/2), test.current_position.x + (tile_size/2), tile_x, tile_y, false);
+					
+					//System.out.println("Move cost from parent(" + parent.parent_id + ") to: " + t.id + " would be: " + gg);
+					//System.out.println("here");
+				} else { // NEW TILE ADD TO OPEN
+					t.parent_id = parent_id;
+					t.state = ASTAR.OPEN;
+					t.path_h = (calculate_dist(tile_x, tile_y, target_x, target_y, true));
+					int tt = calculate_dist(parent.current_position.x + (tile_size/2), parent.current_position.y + (tile_size/2), tile_x, tile_y, false);
+					t.path_g = parent.path_g + move_cost;	
+					t.path_f = t.path_g + t.path_h;
+									
+					open_tiles.add(t);
+				}
+
 			}
 		}	
 	}
@@ -275,12 +282,17 @@ public class GameScreen implements Screen {
 		
 		for (Tile t: tiles){
 			if (t.path_f > 0){
-				int x = (int) t.path_f;
-				font.draw(batch, x+"", (t.column*tile_size)+5, (t.row*tile_size)+60);
-				//x = (int) t.path_g;
-				//font.draw(batch, x+"", (t.column*tile_size)+5, (t.row*tile_size)+20);
+				int x = (int) t.path_g;
+//				font.draw(batch, "G:" + x, (t.column*tile_size)+5, (t.row*tile_size)+tile_size);
+//				
 				x = (int) t.path_h;
-				font.draw(batch, x+"", (t.column*tile_size)+33, (t.row*tile_size)+20);
+				font.draw(batch, "H:" + x, (t.column*tile_size), (t.row*tile_size)+tile_size);
+//				
+//				x = (int) t.path_f;
+//				font.draw(batch, x+"", (t.column*tile_size)+5, (t.row*tile_size)+20);
+//				
+//				x = (int) t.id;
+//				font.draw(batch, x+"", (t.column*tile_size)+30, (t.row*tile_size)+ 54);
 			}
 		}
 		
@@ -302,7 +314,7 @@ public class GameScreen implements Screen {
 		}
     }
 	
-	private float calculate_dist(float orig_x,float orig_y,float targ_x,float targ_y, boolean diagonal){
+	private int calculate_dist(float orig_x,float orig_y,float targ_x,float targ_y, boolean diagonal){
 		// USED TO CALCULATE H & G VALUES
 		float h, dist_x, dist_y ;
 		
@@ -315,10 +327,10 @@ public class GameScreen implements Screen {
 			} else {
 				h = 14*dist_x + 10*(dist_y-dist_x);
 			}
-			return h/10;
+			return (int) (h/100);
 		} else {
 			h = (Math.abs(orig_x-targ_x) + Math.abs(orig_y-targ_y));
-			return h;
+			return (int) h;
 		}
 		
 	}
