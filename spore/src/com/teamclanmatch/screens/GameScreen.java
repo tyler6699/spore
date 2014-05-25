@@ -87,7 +87,7 @@ public class GameScreen implements Screen {
 		open_tiles = new ArrayList<Tile>();
 		path = new ArrayList<Tile>();
 		find_tiles = new int[] {1, -1, -SQUARE, SQUARE, SQUARE-1, SQUARE+1, -(SQUARE-1), -(SQUARE+1)};
-
+		//find_tiles = new int[] {1, -1, -SQUARE, SQUARE};
 		// FONT
 		font = new BitmapFont();
 		font.scale(.1F);
@@ -180,7 +180,7 @@ public class GameScreen implements Screen {
 			
 			while (!search_over){
 				int move;
-				for(int i = 0; i < 8; i++){
+				for(int i = 0; i < find_tiles.length; i++){
 					move = i < 4? 10 : 14;
 					mark_tile(current_tile.id, current_tile.id + find_tiles[i] , move);
 				}
