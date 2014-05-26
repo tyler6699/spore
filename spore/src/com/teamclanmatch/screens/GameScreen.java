@@ -220,7 +220,6 @@ public class GameScreen implements Screen {
 								path.add(current_tile);	
 							}
 						}
-						System.out.println(search_time);
 						search_over = true;
 						reset_states = true;
 					}	
