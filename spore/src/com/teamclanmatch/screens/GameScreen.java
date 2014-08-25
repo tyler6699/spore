@@ -17,6 +17,7 @@ import com.teamclanmatch.game.MainGame;
 import com.teamclanmatch.managers.Controller;
 import com.teamclanmatch.managers.Device;
 import com.teamclanmatch.map.Tile;
+import com.teamclanmatch.utils.Maths;
 
 public class GameScreen implements Screen {
 	private MainGame game;
@@ -37,12 +38,6 @@ public class GameScreen implements Screen {
 	// TEST
 	boolean step = false;
 	boolean breaks = false;
-	
-	// METHODS
-	boolean F, G, H;
-	int method;
-	float low_check = 0;
-	float tile_check = 0;
 	
 	private OrthographicCamera camera;
 	private SpriteBatch batch;
@@ -75,11 +70,6 @@ public class GameScreen implements Screen {
 		batch.setProjectionMatrix(camera.combined);
 		controls = new Controller(camera);
 		tile_size = 32;
-		// METHODS
-		F = true;
-		G = false;
-		H = false;
-		method = 0;
 		
 		// All Entities
 		entities = new ArrayList<Entity>();
@@ -237,23 +227,23 @@ public class GameScreen implements Screen {
 
 	private void mark_tile(int parent_id, int tile_id, int move_cost){		
 		Tile parent = tiles.get(parent_id);
-		float tile_x, tile_y;
+		float tile_x, tile_y, p_x, p_y;
 		
 		if (tile_id < tiles.size() && tile_id >= 0){
 			Tile t = tiles.get(tile_id);
+			
 			//DONT SKIP FROM RIGHT TO LEFT (MIRROR)
 			if (!(parent.column == SQUARE-1 && t.column == 0 || parent.column == 0 && t.column == SQUARE-1)){
 				tile_x = t.current_position.x + (tile_size/2);
 				tile_y = t.current_position.y + (tile_size/2);
+				p_x = parent.current_position.x + (tile_size/2);
+				p_y = parent.current_position.y + (tile_size/2);
 				
 				if(t.e_type == E_TYPE.FLOOR && t.state != ASTAR.CLOSED){
 					if (t.state == ASTAR.OPEN){
 						// ALREADY ON OPEN LIST - SHOULD WE REPLACE THE PARENT?					
 						int test = parent.id - tile_id;
-						int move_value = 14;
-						if (test == -SQUARE || test == SQUARE || test == -1 || test == 1 ){
-							move_value= 10;	
-						}
+						int move_value = t.current_position.dst(parent.current_position) == SQUARE ? 10 : 14;
 						
 						if ((t.path_h + move_value + parent.path_g) < t.path_f){
 							t.path_f = t.path_h + move_value + parent.path_g;
@@ -269,7 +259,6 @@ public class GameScreen implements Screen {
 										
 						open_tiles.add(t);
 					}
-
 				}
 			}
 		}	
@@ -281,12 +270,24 @@ public class GameScreen implements Screen {
 			batch.draw(e.texture, e.current_position.x,e.current_position.y, e.w, e.h);
 		}
 		
-		for (Entity e: path){
-			batch.draw(no_path, e.current_position.x,e.current_position.y, e.w, e.h);
+		//for (Entity e: path){
+			//batch.draw(no_path, e.current_position.x,e.current_position.y, e.w, e.h);
+		//}
+		
+		Entity prev = new Entity();
+		for (int i = 0;i < path.size();i++){
+			Entity p = path.get(i);
+			if (i == 0){
+				Maths.drawLine(batch, rock, p.current_position.x + (tile_size/2), p.current_position.y + (tile_size/2), target_x, target_y,2);
+			} else {
+				Maths.drawLine(batch, rock, prev.current_position.x + (tile_size/2), prev.current_position.y + (tile_size/2), p.current_position.x + (tile_size/2), p.current_position.y + (tile_size/2),2);
+			}
+				prev = p;
 		}
-				
+
 		batch.end(); 
     }
+	
 
 	private void RESET_SEARCH() {
 		if (search_over && reset_states){
@@ -337,6 +338,7 @@ public class GameScreen implements Screen {
 		origin_x = (e_hero.column * tile_size) + 16;
 		origin_y = (e_hero.row * tile_size) + 16;
 	}
+	
 
 	private void process_tile_changes() {
 		// LOGIC FOR CHANGING TILES
@@ -386,6 +388,7 @@ public class GameScreen implements Screen {
 			}
 		}
 	}
+	
 
 	private void set_current_hero_tile() {
 		// SHOW CURRENT TILE HERO IS ON
@@ -399,6 +402,7 @@ public class GameScreen implements Screen {
 			}
 		}
 	}
+	
 
 	private void process_movements() {
 		// MOVEMENT
@@ -442,6 +446,7 @@ public class GameScreen implements Screen {
 		
 		return q; 
 	}
+	
 
 	@Override
     public void resize(int width, int height) {}

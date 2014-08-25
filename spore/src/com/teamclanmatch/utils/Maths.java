@@ -51,7 +51,7 @@ public class Maths {
 		}
 	}
 	
-	void drawLine(SpriteBatch sb, Texture texture, float x0, float y0, float x1, float y1, float o) {
+	public static void drawLine(SpriteBatch sb, Texture texture, float x0, float y0, float x1, float y1, float o) {
 		int n = 32;
 		float dx = x1 - x0;
 		float dy = y1 - y0;
